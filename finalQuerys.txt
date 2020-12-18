@@ -1,0 +1,44 @@
+USE IMDb_Database;
+CREATE VIEW winningDirectors AS
+	SELECT genre, director_name, film_title, imdb_rating
+	FROM films
+	JOIN genre USING(genre_id)
+	JOIN awards_linking USING(film_id)
+	JOIN awards USING(award_id)
+    JOIN directors USING(director_id)
+	WHERE award_won IN (
+		SELECT award_won
+		FROM awards_linking
+		JOIN films USING(film_id)
+		WHERE award_won = 1)
+	GROUP BY director_name
+	ORDER BY director_name;
+
+CREATE VIEW lostOscars AS
+	select film_title, sum(award_won+1) as 'nominated_and_lost'
+	from films join awards_linking using (film_id)
+	where award_won = 0
+	group by film_title
+	order by sum(award_won+1) desc;
+
+CREATE VIEW highlyRated AS	
+	SELECT film_id AS 'IMDb ID', film_title AS 'Film', imdb_rating AS 'IMDb Rating',
+        genre AS 'Genre'
+	FROM films join genre using (genre_id)
+	WHERE imdb_rating > 8
+	ORDER BY imdb_rating;
+
+
+CREATE VIEW genreAvgs AS
+	SELECT genre, AVG(imdb_rating) AS 'average rating'
+    	FROM films
+    	JOIN genre USING(genre_id)
+    	GROUP BY genre
+    	ORDER BY AVG(imdb_rating);
+
+CREATE VIEW repeatActors AS
+	select actor_name, count(actors_linking.actor_id) as 'number of appearances'
+	from actors join actors_linking using (actor_id)
+	group by actor_name
+	having count(actors_linking.actor_id) >1
+	order by count(actors_linking.actor_id) desc
